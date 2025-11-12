@@ -1,0 +1,25 @@
+seed: 0
+experiment_name: "rk_rsrnm_min"
+problem:
+  key: "rosenbrock"
+  params:
+    dim: 10
+algorithm:
+  key: "rk_rsrnm"
+  params:
+    max_iters: 500
+    tol: 1.0e-8
+    alpha0: 1.0
+    c1: 1.0e-4
+    rho: 0.5
+    s: 6
+    rs_reg: 1.0e-8
+    r: 4
+    L: 10
+    rk_reg: 1.0e-8
+    q_dist: "gaussian"
+    p_dist: "gaussian"
+    warm_start: true
+logging:
+  save_plot: true
+  plot_metrics: ["grad_norm", "f"]

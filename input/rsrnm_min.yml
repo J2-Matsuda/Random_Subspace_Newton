@@ -16,4 +16,5 @@ algorithm:
     rs_reg: 1.0e-8
 logging:
   save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "alpha"]
   plot_metrics: ["grad_norm", "f"]

@@ -11,20 +11,29 @@ from utils.io import ensure_parent_dir
 
 
 class ExperimentLogger:
-    def __init__(self, csv_path: str | Path, jsonl_path: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        csv_path: str | Path,
+        jsonl_path: str | Path | None = None,
+        csv_columns: List[str] | None = None,
+    ) -> None:
         self.csv_path = Path(csv_path).expanduser().resolve()
         self.jsonl_path = (
             Path(jsonl_path).expanduser().resolve() if jsonl_path else None
         )
         self.rows: List[Dict[str, Any]] = []
-        self.columns: List[str] = []
+        self._fixed_columns = csv_columns is not None and len(csv_columns) > 0
+        self.columns: List[str] = list(csv_columns) if csv_columns else []
 
     def log(self, row: Dict[str, Any]) -> None:
-        row_copy = dict(row)
-        for key in row_copy:
-            if key not in self.columns:
-                self.columns.append(key)
-        self.rows.append(row_copy)
+        if self._fixed_columns:
+            filtered = {col: row.get(col, None) for col in self.columns}
+        else:
+            filtered = dict(row)
+            for key in filtered:
+                if key not in self.columns:
+                    self.columns.append(key)
+        self.rows.append(filtered)
 
     def flush(self) -> None:
         if not self.rows:

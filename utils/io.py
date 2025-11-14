@@ -42,5 +42,5 @@ def ensure_dir(path: str | Path) -> Path:
 
 
 def timestamp_tag() -> str:
-    """Return a sortable timestamp tag."""
-    return _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    """Return a sortable timestamp tag without separators."""
+    return _dt.datetime.now().strftime("%Y%m%d%H%M")

@@ -16,6 +16,8 @@ class ArmijoParams:
     alpha0: float = 1.0
     c1: float = 1e-4
     rho: float = 0.5
+    max_backtracks: int = 50
+    min_alpha: float = 1e-16
 
 
 def norm(vector: Array) -> float:
@@ -66,22 +68,26 @@ def armijo_backtracking(
     fx: float | None = None,
 ) -> Tuple[float, float]:
     """Perform Armijo backtracking; returns (alpha, new_value)."""
-    alpha = params.alpha0
-    c1 = params.c1
-    rho = params.rho
-    if fx is None:
-        fx = float(value_fn(x))
-    directional = float(grad @ direction)
-    if directional >= 0:
-        # Guard against non-descent directions
-        directional = directional - abs(directional) - 1e-12
-    min_alpha = 1e-16
-    while alpha > min_alpha:
-        candidate = x + alpha * direction
+    t = float(params.alpha0 or 1.0)
+    c1 = float(params.c1)
+    rho = float(params.rho)
+    fx = float(value_fn(x)) if fx is None else float(fx)
+
+    gTd = float(grad @ direction)
+    if not np.isfinite(gTd) or gTd >= 0.0:
+        return 0.0, fx
+
+    max_iters = int(getattr(params, "max_backtracks", 50))
+    min_alpha = float(getattr(params, "min_alpha", 1e-16))
+
+    for _ in range(max_iters):
+        candidate = x + t * direction
         f_candidate = float(value_fn(candidate))
-        if f_candidate <= fx + c1 * alpha * directional:
-            return alpha, f_candidate
-        alpha *= rho
+        if np.isfinite(f_candidate) and f_candidate <= fx + c1 * t * gTd:
+            return t, f_candidate
+        t *= rho
+        if t < min_alpha:
+            break
     return 0.0, fx
 
 

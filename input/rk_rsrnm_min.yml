@@ -13,13 +13,14 @@ algorithm:
     c1: 1.0e-4
     rho: 0.5
     s: 6
-    rs_reg: 1.0e-8
+    rs_reg: 0.0
     r: 4
     L: 10
-    rk_reg: 1.0e-8
+    rk_reg: 0.0
     q_dist: "gaussian"
     p_dist: "gaussian"
     warm_start: true
 logging:
   save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "alpha", "rk_residual"]
   plot_metrics: ["grad_norm", "f"]

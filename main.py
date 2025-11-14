@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import shutil
 import sys
 import traceback
 
@@ -51,7 +52,9 @@ def parse_args() -> argparse.Namespace:
 # ------------------------------------------------------------
 # 実行ユーティリティ
 # ------------------------------------------------------------
-def prepare_paths(log_root: Path, experiment_name: str) -> tuple[Path, Path, Path]:
+def prepare_paths(
+    log_root: Path, folder_name: str, file_stem: str
+) -> tuple[Path, Path, Path]:
     """ログ出力用のパスを用意する。
 
     Args:
@@ -61,9 +64,9 @@ def prepare_paths(log_root: Path, experiment_name: str) -> tuple[Path, Path, Pat
     Returns:
         (log_base, csv_path, jsonl_path)
     """
-    log_base = ensure_dir(log_root / experiment_name)
-    csv_path = log_base / f"{experiment_name}.csv"
-    jsonl_path = log_base / f"{experiment_name}.jsonl"
+    log_base = ensure_dir(log_root / folder_name)
+    csv_path = log_base / f"{file_stem}.csv"
+    jsonl_path = log_base / f"{file_stem}.jsonl"
     return log_base, csv_path, jsonl_path
 
 
@@ -83,8 +86,9 @@ def main() -> None:
     args = parse_args()
 
     # --- 設定読み込み ---
+    config_path = Path(args.config).expanduser().resolve()
     try:
-        config = load_yaml(args.config)
+        config = load_yaml(config_path)
     except Exception as e:
         print(f"[ERROR] 設定ファイルの読み込みに失敗しました: {args.config}", file=sys.stderr)
         traceback.print_exc()
@@ -95,8 +99,21 @@ def main() -> None:
     np.random.seed(seed)
 
     # --- 実験名とログパスの準備 ---
-    experiment_name = config.get("experiment_name", f"exp_{timestamp_tag()}")
-    log_base, csv_path, jsonl_path = prepare_paths(Path(args.logdir), experiment_name)
+    timestamp = timestamp_tag()
+    experiment_name = config.get("experiment_name", f"exp_{timestamp}")
+    config_stem = Path(args.config).stem
+    run_folder = f"{config_stem}_{timestamp}"
+    log_base, csv_path, jsonl_path = prepare_paths(
+        Path(args.logdir), run_folder, experiment_name
+    )
+    try:
+        shutil.copy2(config_path, log_base / config_path.name)
+    except Exception:
+        print(
+            "[WARN] 設定ファイルのコピーに失敗しましたが、実験は継続します。",
+            file=sys.stderr,
+        )
+        traceback.print_exc()
 
     # --- 問題・手法の構築 ---
     try:
@@ -114,11 +131,14 @@ def main() -> None:
         sys.exit(1)
 
     # --- ロガーの初期化と実行 ---
-    logger = ExperimentLogger(csv_path=csv_path, jsonl_path=jsonl_path)
+    logging_cfg = config.get("logging", {})
+    csv_metrics = logging_cfg.get("csv_metrics")
+    logger = ExperimentLogger(
+        csv_path=csv_path, jsonl_path=jsonl_path, csv_columns=csv_metrics
+    )
     result = algorithm.run(problem, logger)
 
     # --- 収束図の保存（任意） ---
-    logging_cfg = config.get("logging", {})
     if logging_cfg.get("save_plot", False):
         metrics = logging_cfg.get("plot_metrics", ["grad_norm"])
         plot_path = log_base / f"{experiment_name}_convergence.png"

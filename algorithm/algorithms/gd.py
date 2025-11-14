@@ -25,6 +25,7 @@ class GradientDescent(AlgorithmBase):
         history = []
         converged = False
         fx = problem.value(x)
+        self._init_progress_tracker(max_iters)
         for k in range(max_iters):
             grad = problem.gradient(x)
             grad_norm = float(np.linalg.norm(grad))
@@ -39,6 +40,7 @@ class GradientDescent(AlgorithmBase):
                 )
                 logger.log(row)
                 history.append(row)
+                self._report_progress(k)
                 break
             direction = -grad
             alpha, new_value = armijo_backtracking(
@@ -53,6 +55,7 @@ class GradientDescent(AlgorithmBase):
             )
             logger.log(row)
             history.append(row)
+            self._report_progress(k)
             if alpha == 0.0:
                 break
             x = x + alpha * direction

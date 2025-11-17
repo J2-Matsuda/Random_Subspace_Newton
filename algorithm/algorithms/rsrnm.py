@@ -20,6 +20,7 @@ import numpy as np
 
 from algorithm.base import AlgorithmBase, AlgorithmResult, Logger
 from analysis import metrics
+from utils.dtypes import as_dtype, eye
 from utils.math_tools import (
     ArmijoParams,
     armijo_backtracking,
@@ -38,7 +39,7 @@ class RSRNM(AlgorithmBase):
         tol: float          収束判定の閾値（||∇f|| ≤ tol）
         s: int              スケッチ行列 P の行数（= サブスペース次元）
         rs_reg: float       小系 (P H P^T) に加える正則化 λ
-        alpha0, c1, rho:    Armijo バックトラッキングの各パラメータ
+        t0, alpha, beta:    Armijo バックトラッキングの各パラメータ
     """
 
     def run(self, problem, logger: Logger) -> AlgorithmResult:
@@ -63,13 +64,15 @@ class RSRNM(AlgorithmBase):
 
         # --- Armijo バックトラッキングの設定 ---
         armijo_params = ArmijoParams(
-            alpha0=params.get("alpha0", 1.0),
-            c1=params.get("c1", 1e-4),
-            rho=params.get("rho", 0.5),
+            t0=params.get("t0", 1.0),
+            alpha=params.get("alpha", 1e-4),
+            beta=params.get("beta", 0.5),
+            max_backtracks=params.get("max_backtracks", 50),
+            min_alpha=params.get("min_alpha", 1e-16),
         )
 
         # --- 初期化 ---
-        x = problem.initial_point().astype(float)
+        x = as_dtype(problem.initial_point())
         fx = problem.value(x)
         history = []
         converged = False
@@ -79,7 +82,7 @@ class RSRNM(AlgorithmBase):
         #        主要ループ
         # ===============================
         for k in range(max_iters):
-            grad = problem.gradient(x)
+            grad = as_dtype(problem.gradient(x))
             grad_norm = float(np.linalg.norm(grad))
             hessian = self._hessian(problem, x)  # 未提供なら I を仮採用
 
@@ -91,7 +94,7 @@ class RSRNM(AlgorithmBase):
                     value=fx,
                     grad=grad,
                     x=x,
-                    extra=self._rs_extras(alpha=0.0, s_dim=s_dim, rs_reg=rs_reg),
+                    extra=self._rs_extras(t_k=0.0, s_dim=s_dim, rs_reg=rs_reg),
                 )
                 logger.log(row)
                 history.append(row)
@@ -113,7 +116,7 @@ class RSRNM(AlgorithmBase):
             direction = self._ensure_descent(direction, grad)
 
             # ---- Armijo バックトラッキングで α を探索 ----
-            alpha, new_fx = armijo_backtracking(
+            t_k, new_fx = armijo_backtracking(
                 problem.value, x, direction, grad, armijo_params, fx=fx
             )
 
@@ -123,18 +126,18 @@ class RSRNM(AlgorithmBase):
                 value=fx,
                 grad=grad,
                 x=x,
-                extra=self._rs_extras(alpha=alpha, s_dim=s_dim, rs_reg=rs_reg),
+                extra=self._rs_extras(t_k=t_k, s_dim=s_dim, rs_reg=rs_reg),
             )
             logger.log(row)
             history.append(row)
             self._report_progress(k)
 
             # ステップが確定しない場合（α=0）は打ち切り
-            if alpha == 0.0:
+            if t_k == 0.0:
                 break
 
             # ---- 前進 ----
-            x = x + alpha * direction
+            x = x + t_k * direction
             fx = new_fx
 
         # --- 終了処理・要約 ---
@@ -158,7 +161,7 @@ class RSRNM(AlgorithmBase):
         """H(x) を取得（未実装なら I を使用）。対称化して返す。"""
         hessian = getattr(problem, "hessian", lambda _: None)(x)
         if hessian is None:
-            hessian = np.eye(x.shape[0])
+            hessian = eye(x.shape[0])
         return symmetrize(hessian)
 
     @staticmethod
@@ -173,10 +176,10 @@ class RSRNM(AlgorithmBase):
         return orthonormalize_rows(gaussian)
 
     @staticmethod
-    def _rs_extras(alpha: float, s_dim: int, rs_reg: float) -> Dict[str, float]:
+    def _rs_extras(t_k: float, s_dim: int, rs_reg: float) -> Dict[str, float]:
         """CSV/JSONL に載せる追加メトリクスを dict 化。"""
         return {
-            "alpha": float(alpha),
+            "t_k": float(t_k),
             "subspace_dim_s": s_dim,  # P の行数（サブスペース次元）
             "inner_dim_r": 0,         # 直解なので 0
             "L": 0,                   # 内側反復なし

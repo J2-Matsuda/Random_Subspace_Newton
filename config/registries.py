@@ -6,6 +6,7 @@ from typing import Any, Dict, Type
 
 from algorithm.algorithms.gd import GradientDescent
 from algorithm.algorithms.rk_rsrnm import RKRsrnm
+from algorithm.algorithms.rk_rsrnm_v2 import RKRsrnmV2
 from algorithm.algorithms.rsrnm import RSRNM
 from problem.problems.quadratic import QuadraticProblem
 from problem.problems.rosenbrock import RosenbrockProblem
@@ -19,6 +20,7 @@ ALGORITHM_REGISTRY: Dict[str, Type] = {
     "gd": GradientDescent,
     "rsrnm": RSRNM,
     "rk_rsrnm": RKRsrnm,
+    "rk_rsrnm_v2": RKRsrnmV2,
 }
 
 

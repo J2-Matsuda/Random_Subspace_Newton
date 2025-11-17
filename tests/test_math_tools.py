@@ -29,13 +29,13 @@ def test_armijo_condition_satisfied():
     x = np.array([1.0, 1.0])
     grad = x.copy()
     direction = -grad
-    params = ArmijoParams(alpha0=1.0, c1=1e-4, rho=0.5)
+    params = ArmijoParams(t0=1.0, alpha=1e-4, beta=0.5)
     alpha, new_val = armijo_backtracking(
         value_fn, x, direction, grad, params, fx=value_fn(x)
     )
     assert alpha > 0
     lhs = new_val
-    rhs = value_fn(x) + params.c1 * alpha * (grad @ direction)
+    rhs = value_fn(x) + params.alpha * alpha * (grad @ direction)
     assert lhs <= rhs + 1e-12
 
 

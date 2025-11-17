@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from utils.dtypes import DTYPE, as_dtype, zeros
+
 
 @dataclass
 class RosenbrockProblem:
@@ -14,14 +16,14 @@ class RosenbrockProblem:
     b: float = 100.0
 
     def value(self, x: np.ndarray) -> float:
-        x = np.asarray(x)
+        x = as_dtype(x)
         return float(
             np.sum(self.b * (x[1:] - x[:-1] ** 2) ** 2 + (self.a - x[:-1]) ** 2)
         )
 
     def gradient(self, x: np.ndarray) -> np.ndarray:
-        x = np.asarray(x)
-        grad = np.zeros_like(x)
+        x = as_dtype(x)
+        grad = zeros(self.dim)
         grad[:-1] = (
             -4 * self.b * x[:-1] * (x[1:] - x[:-1] ** 2) - 2 * (self.a - x[:-1])
         )
@@ -29,9 +31,9 @@ class RosenbrockProblem:
         return grad
 
     def hessian(self, x: np.ndarray) -> np.ndarray:
-        x = np.asarray(x)
-        hess = np.zeros((self.dim, self.dim))
-        diag = np.zeros(self.dim)
+        x = as_dtype(x)
+        hess = zeros((self.dim, self.dim))
+        diag = zeros(self.dim)
         diag[:-1] = 12 * self.b * x[:-1] ** 2 - 4 * self.b * x[1:] + 2
         diag[-1] = 2 * self.b
         hess[np.diag_indices(self.dim)] = diag
@@ -42,7 +44,7 @@ class RosenbrockProblem:
         return hess
 
     def initial_point(self) -> np.ndarray:
-        x0 = np.empty(self.dim)
-        x0[::2] = -1.2
-        x0[1::2] = 1.0
+        x0 = zeros(self.dim)
+        x0[::2] = as_dtype(-1.2)
+        x0[1::2] = as_dtype(1.0)
         return x0

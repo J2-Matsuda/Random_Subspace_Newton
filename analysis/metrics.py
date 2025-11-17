@@ -8,7 +8,7 @@ import numpy as np
 
 BASE_COLUMNS = ("k", "f", "grad_norm", "x_norm")
 RS_COLUMNS = (
-    "alpha",
+    "t_k",
     "subspace_dim_s",
     "inner_dim_r",
     "L",

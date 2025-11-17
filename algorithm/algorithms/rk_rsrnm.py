@@ -10,7 +10,7 @@
   - RK 風更新： y_{l+1} = y_l - Q^T (Q H Q^T + λ_rk I)^{-1} Q (H y_l - g/||g||)
   - 方向構成：  u = y_L / ||y_L||,  P = [u; Ẑ]（Ẑ は u の直交補から行直交化）
                 s = - P^T (P H P^T + λ_rs I)^{-1} P g
-  - Armijo：   f(x + α s) ≤ f(x) + c1 α g^T s を満たす α をバックトラックで探索
+  - Armijo：   f(x + α s) ≤ f(x) + α t g^T s を満たす α をバックトラックで探索
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ import numpy as np
 
 from algorithm.base import AlgorithmBase, AlgorithmResult, Logger
 from analysis import metrics
+from utils.dtypes import as_dtype, eye
 from utils.math_tools import (
     ArmijoParams,
     armijo_backtracking,
@@ -49,7 +50,7 @@ class RKRsrnm(AlgorithmBase):
         y_cap: float           # y のノルム上限（数値暴走の保険）
         warm_start: bool       # y のウォームスタートを使うか
         y0: array-like         # k=0 の初期 y
-        alpha0, c1, rho:       # Armijo パラメータ
+        t0, alpha, beta:       # Armijo パラメータ
     """
 
     def run(self, problem, logger: Logger) -> AlgorithmResult:
@@ -79,34 +80,42 @@ class RKRsrnm(AlgorithmBase):
 
         # Armijo の設定（α をバックトラックで探索）
         armijo_params = ArmijoParams(
-            alpha0=params.get("alpha0", 1.0),
-            c1=params.get("c1", 1e-4),
-            rho=params.get("rho", 0.5),
+            t0=params.get("t0", params.get("t0", 1.0)),
+            alpha=params.get("alpha", params.get("alpha", 1e-4)),
+            beta=params.get("beta", params.get("beta", 0.5)),
+            max_backtracks=params.get("max_backtracks", 50),
+            min_alpha=params.get("min_alpha", 1e-16),
         )
 
         # ---- 初期点 ----
-        x = problem.initial_point().astype(float)
+        x = as_dtype(problem.initial_point())
         fx = problem.value(x)
         history = []
         converged = False
         prev_state: Optional[Dict[str, np.ndarray | float]] = None  # y, g, H, x などを保持
+        self._init_progress_tracker(max_iters)
+        eps = as_dtype(1e-16)
 
         # ---- 反復 ----
         for k in range(max_iters):
-            grad = problem.gradient(x)
+            grad = as_dtype(problem.gradient(x))
             grad_norm = float(np.linalg.norm(grad))
             hessian = self._hessian(problem, x)
 
             # 収束判定：||∇f|| <= tol
             if grad_norm <= tol:
                 converged = True
+                
+                # 正則化項
+                # rs_reg = grad_norm ** (0.5)
+                
                 row = metrics.build_row(
                     iteration=k,
                     value=fx,
                     grad=grad,
                     x=x,
                     extra=self._rk_extras(
-                        alpha=0.0,
+                        t_k=0.0,
                         subspace_rows=1 + rs_rows,  # 先頭行 u + 直交補 rs_rows 行
                         r_dim=r_dim,
                         L=0,
@@ -118,10 +127,11 @@ class RKRsrnm(AlgorithmBase):
                 )
                 logger.log(row)
                 history.append(row)
+                self._report_progress(k)
                 break
 
             # g を正規化して rhs = g/||g|| を作る（Hy ≈ rhs を解くイメージ）
-            grad_unit = grad / (grad_norm + 1e-16)
+            grad_unit = grad / (as_dtype(grad_norm) + eps)
 
             # y の初期化：ウォームスタートなら提案式，そうでなければ y0
             y_init = self._initialise_y(
@@ -156,7 +166,7 @@ class RKRsrnm(AlgorithmBase):
             direction = self._ensure_descent(direction, grad)
 
             # ---- Armijo で α を探索し，更新 ----
-            alpha, new_fx = armijo_backtracking(
+            t_k, new_fx = armijo_backtracking(
                 problem.value, x, direction, grad, armijo_params, fx=fx
             )
 
@@ -166,8 +176,8 @@ class RKRsrnm(AlgorithmBase):
                 value=fx,
                 grad=grad,
                 x=x,
-                extra=self._rk_extras(
-                    alpha=alpha,
+                    extra=self._rk_extras(
+                    t_k=t_k,
                     subspace_rows=P_rows,
                     r_dim=r_dim,
                     L=L,
@@ -179,9 +189,10 @@ class RKRsrnm(AlgorithmBase):
             )
             logger.log(row)
             history.append(row)
+            self._report_progress(k)
 
             # α=0 の場合はこれ以上前進できないので打ち切り
-            if alpha == 0.0:
+            if t_k == 0.0:
                 break
 
             # 次イテレーション用の状態を保存（ウォームスタートで使用）
@@ -194,7 +205,7 @@ class RKRsrnm(AlgorithmBase):
             }
 
             # 前進
-            x = x + alpha * direction
+            x = x + t_k * direction
             fx = new_fx
 
         # ---- 終了処理 ----
@@ -218,7 +229,7 @@ class RKRsrnm(AlgorithmBase):
         """H(x) を取得（未実装なら I を使用）。対称化して返す。"""
         hessian = getattr(problem, "hessian", lambda _: None)(x)
         if hessian is None:
-            hessian = np.eye(x.shape[0])
+            hessian = eye(x.shape[0])
         return symmetrize(hessian)
 
     @staticmethod
@@ -248,10 +259,11 @@ class RKRsrnm(AlgorithmBase):
 
         # 係数：1 - g_{k-1}^T H_{k-1} (x_k - x_{k-1}) / ||g_{k-1}||^2
         numerator = g_prev @ (H_prev @ x_diff)
-        coeff = 1.0 - numerator / (prev_grad_norm**2 + 1e-16)
+        eps = as_dtype(1e-5)
+        coeff = 1.0 - numerator / (prev_grad_norm**2 + eps)
 
         # 追加項：(x_k - x_{k-1}) / ||g_{k-1}||
-        update = x_diff / (prev_grad_norm + 1e-16)
+        update = x_diff / (prev_grad_norm + eps)
 
         return coeff * y_prev + update
 
@@ -332,7 +344,8 @@ class RKRsrnm(AlgorithmBase):
         # y がほぼゼロなら勾配正規化で代用
         y_norm = norm(y_vec)
         if y_norm < 1e-12:
-            y_vec = grad / (norm(grad) + 1e-16)
+            eps = as_dtype(1e-16)
+            y_vec = grad / (norm(grad) + eps)
             y_norm = norm(y_vec)
 
         # 先頭行
@@ -374,7 +387,7 @@ class RKRsrnm(AlgorithmBase):
     @staticmethod
     def _rk_extras(
         *,
-        alpha: float,
+        t_k: float,
         subspace_rows: int,
         r_dim: int,
         L: int,
@@ -385,7 +398,7 @@ class RKRsrnm(AlgorithmBase):
     ) -> Dict[str, float]:
         """CSV/JSONL に載せる追加メトリクスを dict 化。"""
         return {
-            "alpha": float(alpha),
+            "t_k": float(t_k),
             "subspace_dim_s": subspace_rows,
             "inner_dim_r": r_dim,
             "L": L,

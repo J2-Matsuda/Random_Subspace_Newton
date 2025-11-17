@@ -8,6 +8,7 @@ import numpy as np
 
 from algorithm.base import AlgorithmBase, AlgorithmResult, Logger
 from analysis import metrics
+from utils.dtypes import as_dtype
 from utils.math_tools import ArmijoParams, armijo_backtracking
 
 
@@ -17,17 +18,19 @@ class GradientDescent(AlgorithmBase):
         max_iters = params.get("max_iters", 100)
         tol = params.get("tol", 1e-6)
         armijo = ArmijoParams(
-            alpha0=params.get("alpha0", 1.0),
-            c1=params.get("c1", 1e-4),
-            rho=params.get("rho", 0.5),
+            t0=params.get("t0", 1.0),
+            alpha=params.get("alpha", 1e-4),
+            beta=params.get("beta", 0.5),
+            max_backtracks=params.get("max_backtracks", 50),
+            min_alpha=params.get("min_alpha", 1e-16),
         )
-        x = problem.initial_point().astype(float)
+        x = as_dtype(problem.initial_point())
         history = []
         converged = False
         fx = problem.value(x)
         self._init_progress_tracker(max_iters)
         for k in range(max_iters):
-            grad = problem.gradient(x)
+            grad = as_dtype(problem.gradient(x))
             grad_norm = float(np.linalg.norm(grad))
             if grad_norm <= tol:
                 converged = True
@@ -36,7 +39,7 @@ class GradientDescent(AlgorithmBase):
                     value=fx,
                     grad=grad,
                     x=x,
-                    extra={"alpha": 0.0},
+                    extra={"t_k": 0.0},
                 )
                 logger.log(row)
                 history.append(row)
@@ -51,7 +54,7 @@ class GradientDescent(AlgorithmBase):
                 value=fx,
                 grad=grad,
                 x=x,
-                extra={"alpha": alpha},
+                extra={"t_k": alpha},
             )
             logger.log(row)
             history.append(row)

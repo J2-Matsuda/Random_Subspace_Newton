@@ -23,7 +23,7 @@ You can control what goes into each artifact via the YAML logging section, e.g.
 ```yaml
 logging:
   save_plot: true
-  csv_metrics: ["k", "f", "grad_norm", "alpha"]
+  csv_metrics: ["k", "f", "grad_norm", "t_k"]
   plot_metrics: ["grad_norm", "f"]
 ```
 

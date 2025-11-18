@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -24,6 +25,13 @@ class ExperimentLogger:
         self.rows: List[Dict[str, Any]] = []
         self._fixed_columns = csv_columns is not None and len(csv_columns) > 0
         self.columns: List[str] = list(csv_columns) if csv_columns else []
+        if self._fixed_columns:
+            if "cpu_time" not in self.columns:
+                self.columns.append("cpu_time")
+            if "cpu_time_sum" not in self.columns:
+                self.columns.append("cpu_time_sum")
+        self._last_cpu_time = time.process_time()
+        self._cpu_time_sum = 0.0
 
     def log(self, row: Dict[str, Any]) -> None:
         if self._fixed_columns:
@@ -33,6 +41,16 @@ class ExperimentLogger:
             for key in filtered:
                 if key not in self.columns:
                     self.columns.append(key)
+            if "cpu_time_sum" not in self.columns:
+                self.columns.append("cpu_time_sum")
+        now = time.process_time()
+        delta = now - self._last_cpu_time
+        self._last_cpu_time = now
+        if "cpu_time" not in filtered or filtered["cpu_time"] in (None, ""):
+            filtered["cpu_time"] = delta
+        self._cpu_time_sum += float(filtered["cpu_time"])
+        if "cpu_time_sum" not in filtered or filtered["cpu_time_sum"] in (None, ""):
+            filtered["cpu_time_sum"] = self._cpu_time_sum
         self.rows.append(filtered)
 
     def flush(self) -> None:

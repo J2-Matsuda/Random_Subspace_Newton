@@ -1,0 +1,25 @@
+metric: "grad_norm"
+cpu_column: "cpu_time"
+output: "plots/compare_others.png"
+title: 
+series:
+  # - label: "rk_rsrn_L10"
+  #   path: "log/rk_rsrnm_quadratic_202511171432/rk_rsrn_L10.csv"
+
+  # - label: "rk_rsrn_L50"
+  #   path: "log/rk_rsrnm_quadratic_202511171433/rk_rsrn_L50.csv"
+
+  # - label: "rk_rsrn_L100"
+  #   path: "log/rk_rsrnm_quadratic_202511171434/rk_rsrn_L100.csv"
+  
+  # - label: "rk_rsrn_L500"
+  #   path: "log/rk_rsrnm_quadratic_202511171509/rk_rsrn_L500.csv"
+  
+  - label: "rsrn_s50"
+    path: "log\rsrnm_quadratic_202511171532\rsrnm_s50.csv"
+
+  - label: "rsrn_s100"
+    path: "log\rsrnm_quadratic_202511171533\rsrnm_s100.csv"
+
+  - label: "rsrn_s500"
+    path: "log\rsrnm_quadratic_202511171534\rsrnm_s500.csv"

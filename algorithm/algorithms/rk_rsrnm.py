@@ -94,7 +94,7 @@ class RKRsrnm(AlgorithmBase):
         converged = False
         prev_state: Optional[Dict[str, np.ndarray | float]] = None  # y, g, H, x などを保持
         self._init_progress_tracker(max_iters)
-        eps = as_dtype(1e-16)
+        eps = as_dtype(1e-8)
 
         # ---- 反復 ----
         for k in range(max_iters):

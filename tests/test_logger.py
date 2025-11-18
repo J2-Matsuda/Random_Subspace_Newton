@@ -11,6 +11,13 @@ def test_experiment_logger_filters_columns(tmp_path: Path) -> None:
     logger.flush()
 
     content = csv_path.read_text().strip().splitlines()
-    assert content[0].split(",") == ["k", "f"]
-    assert content[1] == "0,1.23"
-    assert content[2] == "1,2.34"
+    header = content[0].split(",")
+    assert header == ["k", "f", "cpu_time", "cpu_time_sum"]
+    first = content[1].split(",")
+    second = content[2].split(",")
+    assert first[:2] == ["0", "1.23"]
+    assert second[:2] == ["1", "2.34"]
+    assert float(first[2]) >= 0.0
+    assert float(second[2]) >= 0.0
+    assert float(first[3]) >= float(first[2])
+    assert float(second[3]) >= float(first[3])

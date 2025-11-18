@@ -1,0 +1,25 @@
+metric: "grad_norm"
+# x: "k"
+x: "cpu_time_sum"
+logy: true
+title: n1000 cond100 s50 r50
+output: "plots/grad_compare.png"
+series:
+  - label: "L10"
+    path: "log/rk_rsrn_s50L10/rk_rsrn_s50L10.csv"
+  - label: "L50"
+    path: "log/rk_rsrn_s50L50/rk_rsrn_s50L50.csv"
+  - label: "L100"
+    path: "log/rk_rsrn_s50L100/rk_rsrn_s50L100.csv"
+  - label: "L500"
+    path: "log/rk_rsrn_s50L500/rk_rsrn_s50L500.csv"    
+  
+  - label: "s10"
+    path: "log/rsrn_s10/rsrn_s10.csv"
+  - label: "s50"
+    path: "log/rsrn_s50/rsrn_s50.csv"
+  - label: "s100"
+    path: "log/rsrn_s100/rsrn_s100.csv"
+  - label: "s500"
+    path: "log/rsrn_s500/rsrn_s500.csv"    
+# python scripts/output_customizer.py --config output/grad_compare.yml

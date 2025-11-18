@@ -21,6 +21,7 @@ algorithm:
     rk_reg: 0.0
     warm_start: true
 logging:
+  include_timestamp: false
   save_plot: true
   csv_metrics: ["k", "f", "grad_norm", "t_k", "rk_residual"]
   plot_metrics: ["grad_norm", "f", "t_k", "rk_residual"]

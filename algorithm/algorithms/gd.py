@@ -10,6 +10,7 @@ from algorithm.base import AlgorithmBase, AlgorithmResult, Logger
 from analysis import metrics
 from utils.dtypes import as_dtype
 from utils.math_tools import ArmijoParams, armijo_backtracking
+from utils.timer import CPUTimer
 
 
 class GradientDescent(AlgorithmBase):
@@ -29,17 +30,20 @@ class GradientDescent(AlgorithmBase):
         converged = False
         fx = problem.value(x)
         self._init_progress_tracker(max_iters)
+        cpu_timer = CPUTimer()
         for k in range(max_iters):
+            cpu_timer.start()
             grad = as_dtype(problem.gradient(x))
             grad_norm = float(np.linalg.norm(grad))
             if grad_norm <= tol:
+                iter_cpu = cpu_timer.stop()
                 converged = True
                 row = metrics.build_row(
                     iteration=k,
                     value=fx,
                     grad=grad,
                     x=x,
-                    extra={"t_k": 0.0},
+                    extra={"t_k": 0.0, "cpu_time": iter_cpu},
                 )
                 logger.log(row)
                 history.append(row)
@@ -49,12 +53,13 @@ class GradientDescent(AlgorithmBase):
             alpha, new_value = armijo_backtracking(
                 problem.value, x, direction, grad, armijo, fx=fx
             )
+            iter_cpu = cpu_timer.stop()
             row = metrics.build_row(
                 iteration=k,
                 value=fx,
                 grad=grad,
                 x=x,
-                extra={"t_k": alpha},
+                extra={"t_k": alpha, "cpu_time": iter_cpu},
             )
             logger.log(row)
             history.append(row)

@@ -98,13 +98,16 @@ def main() -> None:
     seed = int(config.get("seed", 0))
     np.random.seed(seed)
 
+    logging_cfg = config.get("logging", {})
+    include_timestamp = logging_cfg.get("include_timestamp", True)
+
     # --- 実験名とログパスの準備 ---
     timestamp = timestamp_tag()
     experiment_name = config.get("experiment_name", f"exp_{timestamp}")
-    config_stem = Path(args.config).stem
-    run_folder = f"{config_stem}_{timestamp}"
+    suffix = f"_{timestamp}" if include_timestamp else ""
+    run_folder = f"{experiment_name}{suffix}"
     log_base, csv_path, jsonl_path = prepare_paths(
-        Path(args.logdir), run_folder, experiment_name
+        Path(args.logdir), run_folder, run_folder
     )
     try:
         shutil.copy2(config_path, log_base / config_path.name)
@@ -123,15 +126,26 @@ def main() -> None:
         traceback.print_exc()
         sys.exit(1)
 
+    algo_spec = dict(config["algorithm"])
+    algo_params = dict(algo_spec.get("params", {}))
+    if logging_cfg.get("debug") and algo_spec.get("key") == "rk_rsrnm":
+        algo_spec["key"] = "rk_rsrnm_debug"
+        algo_params.setdefault("debug_print", logging_cfg.get("debug_print", True))
+        if "debug_csv" not in algo_params:
+            debug_csv_name = logging_cfg.get(
+                "debug_csv", log_base / f"{experiment_name}_debug.csv"
+            )
+            algo_params["debug_csv"] = str(debug_csv_name)
+    algo_spec["params"] = algo_params
+
     try:
-        algorithm = build_algorithm(config["algorithm"])
+        algorithm = build_algorithm(algo_spec)
     except KeyError as e:
         print("[ERROR] config['algorithm'] セクションが不足または不正です。", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)
 
     # --- ロガーの初期化と実行 ---
-    logging_cfg = config.get("logging", {})
     csv_metrics = logging_cfg.get("csv_metrics")
     logger = ExperimentLogger(
         csv_path=csv_path, jsonl_path=jsonl_path, csv_columns=csv_metrics

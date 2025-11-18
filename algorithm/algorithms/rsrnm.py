@@ -29,6 +29,8 @@ from utils.math_tools import (
     solve_regularized_system,
     symmetrize,
 )
+from utils.timer import CPUTimer
+from utils.timer import CPUTimer
 
 
 class RSRNM(AlgorithmBase):
@@ -76,25 +78,28 @@ class RSRNM(AlgorithmBase):
         fx = problem.value(x)
         history = []
         converged = False
-        self._init_progress_tracker(max_iters)  # 進捗表示などがあれば有効化
+        self._init_progress_tracker(max_iters)
+        cpu_timer = CPUTimer()  # 進捗表示などがあれば有効化
 
         # ===============================
         #        主要ループ
         # ===============================
         for k in range(max_iters):
+            cpu_timer.start()
             grad = as_dtype(problem.gradient(x))
             grad_norm = float(np.linalg.norm(grad))
             hessian = self._hessian(problem, x)  # 未提供なら I を仮採用
 
             # ---- 収束判定：||∇f|| ≤ tol ----
             if grad_norm <= tol:
+                iter_cpu = cpu_timer.stop()
                 converged = True
                 row = metrics.build_row(
                     iteration=k,
                     value=fx,
                     grad=grad,
                     x=x,
-                    extra=self._rs_extras(t_k=0.0, s_dim=s_dim, rs_reg=rs_reg),
+                    extra=self._rs_extras(t_k=0.0, s_dim=s_dim, rs_reg=rs_reg, cpu_time=iter_cpu),
                 )
                 logger.log(row)
                 history.append(row)
@@ -121,12 +126,13 @@ class RSRNM(AlgorithmBase):
             )
 
             # ---- ログ出力（k 時点の値を記録）----
+            iter_cpu = cpu_timer.stop()
             row = metrics.build_row(
                 iteration=k,
                 value=fx,
                 grad=grad,
                 x=x,
-                extra=self._rs_extras(t_k=t_k, s_dim=s_dim, rs_reg=rs_reg),
+                extra=self._rs_extras(t_k=t_k, s_dim=s_dim, rs_reg=rs_reg, cpu_time=iter_cpu),
             )
             logger.log(row)
             history.append(row)
@@ -176,17 +182,20 @@ class RSRNM(AlgorithmBase):
         return orthonormalize_rows(gaussian)
 
     @staticmethod
-    def _rs_extras(t_k: float, s_dim: int, rs_reg: float) -> Dict[str, float]:
-        """CSV/JSONL に載せる追加メトリクスを dict 化。"""
+    def _rs_extras(
+        t_k: float, s_dim: int, rs_reg: float, cpu_time: float
+    ) -> Dict[str, float]:
+        """Extra metrics for CSV/JSONL."""
         return {
             "t_k": float(t_k),
-            "subspace_dim_s": s_dim,  # P の行数（サブスペース次元）
-            "inner_dim_r": 0,         # 直解なので 0
-            "L": 0,                   # 内側反復なし
-            "rs_reg": float(rs_reg),  # 小系の正則化
-            "rk_reg": 0.0,            # 直解なので 0
-            "rk_iters": 0,            # 直解なので 0
-            "rk_residual": 0.0,       # 直解なので 0
+            "subspace_dim_s": s_dim,
+            "inner_dim_r": 0,
+            "L": 0,
+            "rs_reg": float(rs_reg),
+            "rk_reg": 0.0,
+            "rk_iters": 0,
+            "rk_residual": 0.0,
+            "cpu_time": float(cpu_time),
         }
 
     @staticmethod

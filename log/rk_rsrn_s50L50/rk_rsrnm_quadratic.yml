@@ -1,0 +1,29 @@
+seed: 0
+experiment_name: "rk_rsrn_s50L50"
+problem:
+  key: "quadratic"
+  params:
+    dim: 1000
+    condition_number: 100
+    seed: 0
+algorithm:
+  key: "rk_rsrnm"
+  params:
+    max_iters: 1000
+    tol: 1.0e-6
+    t0: 1.0
+    alpha: 1.0e-4
+    beta: 0.5
+    s: 50
+    rs_reg: 0.0
+    r: 50
+    L: 50
+    rk_reg: 0.0
+    warm_start: true
+logging:
+  include_timestamp: false
+  save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "t_k", "rk_residual"]
+  plot_metrics: ["grad_norm", "f", "t_k", "rk_residual"]
+  debug: false          # set true to enable rk_rsrnm_debug wrapping
+  debug_csv: "log/rk_rsrn_debug/run_debug.csv"

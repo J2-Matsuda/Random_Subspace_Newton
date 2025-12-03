@@ -64,25 +64,34 @@ def main() -> None:
     title = cfg.get("title")
 
     raw_series = cfg.get("series", [])
+    series_list: List[Tuple[str, Path, str | None]] = []
     if isinstance(raw_series, list):
-        series_map = {
-            item["label"]: Path(item["path"])
-            for item in raw_series
-            if isinstance(item, dict)
-        }
+        for item in raw_series:
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label")
+            path = item.get("path")
+            if not label or not path:
+                continue
+            style = item.get("style") or item.get("linestyle")
+            series_list.append((label, Path(path), style))
     else:
         series_map = parse_series_args(raw_series or [])
+        series_list.extend((label, path, None) for label, path in series_map.items())
 
-    if not series_map:
+    if not series_list:
         raise ValueError("No series specified in config.")
 
     plt.figure()
-    for label, csv_path in series_map.items():
+    for label, csv_path, style in series_list:
         xs, ys = load_series(csv_path, x_key, metric)
+        plot_kwargs = {"label": label}
+        if style:
+            plot_kwargs["linestyle"] = style
         if logy:
-            plt.semilogy(xs, ys, label=label)
+            plt.semilogy(xs, ys, **plot_kwargs)
         else:
-            plt.plot(xs, ys, label=label)
+            plt.plot(xs, ys, **plot_kwargs)
 
     plt.xlabel(x_key)
     plt.ylabel(metric)

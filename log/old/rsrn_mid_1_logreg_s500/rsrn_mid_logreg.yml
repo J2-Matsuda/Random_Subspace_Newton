@@ -1,0 +1,27 @@
+seed: 0
+experiment_name: "rsrn_mid_1_logreg_s500"
+problem:
+  key: "logistic_regression"
+  params:
+    dim: 1000
+    n_samples: 4000
+    seed: 0
+    intercept: 0.0
+algorithm:
+  key: "rsrn_mid"
+  params:
+    max_iters: 2000
+    tol: 1.0e-8
+    t0: 1.0
+    alpha: 1.0e-4
+    beta: 0.5
+    s: 500
+    c1: 2.0
+    # c2: 0.1
+    gamma: 0.5
+logging:
+  include_timestamp: false
+  save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "t_k"]
+  plot_metrics: ["grad_norm", "f", "t_k"]
+  debug: false

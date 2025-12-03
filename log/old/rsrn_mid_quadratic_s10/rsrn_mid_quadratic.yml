@@ -1,0 +1,26 @@
+seed: 0
+experiment_name: "rsrn_mid_quadratic_s10"
+problem:
+  key: "quadratic"
+  params:
+    dim: 1000
+    condition_number: 100
+    seed: 0
+algorithm:
+  key: "rsrn_mid"
+  params:
+    max_iters: 2000
+    tol: 1.0e-6
+    t0: 1.0
+    alpha: 1.0e-4
+    beta: 0.5
+    s: 10
+    c1: 2.0
+    c2: 1.0
+    gamma: 0.5
+logging:
+  include_timestamp: false
+  save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "t_k"]
+  plot_metrics: ["grad_norm", "f", "t_k"]
+  debug: false

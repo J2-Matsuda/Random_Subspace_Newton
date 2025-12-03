@@ -1,0 +1,33 @@
+seed: 0
+experiment_name: "rk_rsrn_mid_quadratic_sr50T10"
+problem:
+  key: "quadratic"
+  monotonicity: "x"
+  params:
+    dim: 1000
+    condition_number: 10
+    seed: 0
+algorithm:
+  key: "rk_rsrn_mid"
+  params:
+    max_iters: 2000
+    tol: 1.0e-6
+    t0: 1.0
+    alpha: 1.0e-4
+    beta: 0.5
+    s: 50
+    r: 50
+    L: 10
+    c1: 2.0
+    c2: 1.0
+    gamma: 0.5
+    c1_prime: 2.0
+    c2_prime: 1.0
+    gamma_prime: 0.5
+    warm_start: true
+logging:
+  include_timestamp: false
+  save_plot: true
+  csv_metrics: ["k", "f", "grad_norm", "t_k", "rk_residual"]
+  plot_metrics: ["grad_norm", "f", "t_k", "rk_residual"]
+  debug: false

@@ -1,10 +1,11 @@
 seed: 0
-experiment_name: "rk_rsrn_s50L500"
+experiment_name: "rk_rsrn_sr50L"
 problem:
   key: "quadratic"
+  monotonicity: "x"
   params:
     dim: 1000
-    condition_number: 100
+    condition_number: 10
     seed: 0
 algorithm:
   key: "rk_rsrnm"
@@ -17,7 +18,7 @@ algorithm:
     s: 50
     rs_reg: 0.0
     r: 50
-    L: 500
+    L: 150
     rk_reg: 0.0
     warm_start: true
 logging:

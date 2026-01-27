@@ -1,0 +1,55 @@
+plot:
+  out_dir: outputs/plots
+  figures:
+    # - name: grad_norm_vs_iter
+    #   x: iter
+    #   y: [grad_norm]
+    #   logy: true
+    #   grid: true
+    #   legend: true
+    #   every: 1
+    #   xlim: null
+    #   ylim: null
+    #   title: "grad_norm"
+    #   xlabel: null
+    #   ylabel: null
+    #   x_label: "Iteration"
+    #   y_label: "Gradient norm"
+    #   y_labels:
+    #     grad_norm: "Grad norm"
+    #   save: grad_norm.png
+    #   series:
+    #     - csv: outputs/ARSN_logistic/result.csv
+    #       label: "ARSN"
+    #       label_from: basename_dir
+    #     - csv: outputs/RSRNM_logistic/result.csv
+    #       label: "RSRNM"
+    #       label_from: basename_dir
+    - name: multi_metrics
+      x: time_cum_sec
+      y: [grad_norm]
+      logy: true
+      grid: true
+      legend: true
+      x_label: "Time (seconds)"
+      y_label: "Gradient norm"
+      save: metrics.png
+      series:
+        - csv: outputs/ARSN_logistic_s10/result.csv
+          label_from: basename_dir
+          label: ARSN (s=10)
+        - csv: outputs/RSRNM_logistic_s10/result.csv
+          label_from: basename_dir
+          label: RSRNM (s=10)
+        - csv: outputs/ARSN_logistic_s50/result.csv
+          label_from: basename_dir
+          label: ARSN (s=50)
+        - csv: outputs/RSRNM_logistic_s50/result.csv
+          label_from: basename_dir
+          label: RSRNM (s=50)
+        - csv: outputs/ARSN_logistic_s100/result.csv
+          label_from: basename_dir
+          label: ARSN (s=100)
+        - csv: outputs/RSRNM_logistic_s100/result.csv
+          label_from: basename_dir
+          label: RSRNM (s=100)

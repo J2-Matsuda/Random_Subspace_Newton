@@ -1,0 +1,31 @@
+data:
+  out_dir: data
+  overwrite: true
+  datasets:
+    - name: quadratic_spd
+      type: quadratic
+      out: quadratic_spd.npz
+      n: 2000
+      cond: 100
+      seed: 0
+      indefinite: false
+      dtype: float64
+    # - name: quadratic_indef
+    #   type: quadratic
+    #   out: quadratic_indef.npz
+    #   n: 200
+    #   cond: 100
+    #   seed: 1
+    #   indefinite: true
+    #   dtype: float64
+    - name: logistic_synth
+      type: logistic
+      out: logistic_synth.npz
+      m: 5000
+      n: 1000
+      reg_lambda: 0
+      seed: 0
+      beta_scale: 1.0
+      x_scale: 1.0
+      labels01: true
+      dtype: float64

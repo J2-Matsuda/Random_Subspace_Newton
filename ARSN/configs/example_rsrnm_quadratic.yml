@@ -1,0 +1,38 @@
+algorithm:
+  name: rsrnm
+
+problem:
+  name: quadratic
+  data_path: data/quadratic_spd.npz
+
+rsrnm:
+  max_iter: 200
+  tol_grad: 1.0e-6
+  s: 30
+  beta: 1.0e-4
+  tau: 0.5
+  alpha0: 1.0
+  max_ls_iters: 50
+  seed: 0
+  verbose: true
+  print_every: 5
+
+regularizer:
+  method: diag_shift
+  diag_shift:
+    c1: 2.0
+    c2: 1.0
+    gamma: 1.0
+
+sketch:
+  mode: operator
+  block_size: 256
+  dtype: float64
+
+output:
+  dir: outputs
+  run_name: example_rsrnm_quadratic
+  csv_name: result.csv
+
+logging:
+  record_columns: null

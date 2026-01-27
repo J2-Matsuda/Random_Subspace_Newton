@@ -1,0 +1,7 @@
+{
+  "status": "converged",
+  "iters": 108,
+  "elapsed_sec": 989.2958004579414,
+  "x_final_norm": 8.445377164147855,
+  "output_csv": "/Users/tanakakanakatadeiutonakata/Downloads/\u5352\u8ad6/numerical_experiments/ARSN/outputs/ARSN_logistic_s10/result.csv"
+}

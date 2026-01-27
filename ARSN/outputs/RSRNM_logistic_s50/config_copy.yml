@@ -1,0 +1,33 @@
+algorithm:
+  name: rsrnm
+problem:
+  name: logistic
+  data_path: data/logistic_synth.npz
+  reg_lambda: 0.001
+rsrnm:
+  max_iter: 3000
+  tol_grad: 1.0e-10
+  s: 50
+  beta: 0.0001
+  tau: 0.5
+  alpha0: 1.0
+  max_ls_iters: 50
+  seed: 0
+  verbose: true
+  print_every: 100
+regularizer:
+  method: diag_shift
+  diag_shift:
+    c1: 2.0
+    c2: 1.0
+    gamma: 0.5
+sketch:
+  mode: operator
+  block_size: 256
+  dtype: float64
+output:
+  dir: outputs
+  run_name: RSRNM_logistic
+  csv_name: result.csv
+logging:
+  record_columns: null

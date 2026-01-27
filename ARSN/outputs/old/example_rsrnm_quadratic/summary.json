@@ -1,0 +1,7 @@
+{
+  "status": "max_iter_reached",
+  "iters": 200,
+  "elapsed_sec": 35.55096395802684,
+  "x_final_norm": 3.9968337394738773,
+  "output_csv": "/Users/tanakakanakatadeiutonakata/Downloads/\u5352\u8ad6/numerical_experiments/ARSN/outputs/example_rsrnm_quadratic/result.csv"
+}

@@ -1,0 +1,7 @@
+{
+  "status": "max_iter_reached",
+  "iters": 3000,
+  "elapsed_sec": 1352.703357374994,
+  "x_final_norm": 8.445375261285287,
+  "output_csv": "/Users/tanakakanakatadeiutonakata/Downloads/\u5352\u8ad6/numerical_experiments/ARSN/outputs/RSRNM_logistic/result.csv"
+}
